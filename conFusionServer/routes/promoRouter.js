@@ -58,7 +58,7 @@ promoRouter.route("/:promotionId")
             $set: req.body
         }, { new: true })
             .then((promotion) => {
-                res.statuscode = 200;
+                res.statusCode = 200;
                 res.setHeader("Content-Type", "application/json");
                 res.json(promotion);
             }, (error) => next(error))
