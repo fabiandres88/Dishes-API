@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const Dishes = require('../models/dishes');
-const { response } = require('express');
 
 const dishRouter = express.Router();
 
@@ -79,7 +78,7 @@ dishRouter.route('/:dishId')
         Dishes.findByIdAndDelete(req.params.dishId)
             .then((response) => {
                 res.statusCode = 204;
-                res.setHeader('content-Type', 'application/json');
+                res.setHeader('Content-Type', 'application/json');
                 res.json(response);
             }, (error) => next(error))
             .catch((error) => next(error));
