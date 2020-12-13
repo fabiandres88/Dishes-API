@@ -11,6 +11,7 @@ var promoRouter = require('./routes/promoRouter');
 var leaderRouter = require('./routes/leaderRouter');
 
 const mongoose = require('mongoose');
+const { signedCookie } = require('cookie-parser');
 
 const url = 'mongodb://localhost:27017/conFusion';
 const connect = mongoose.connect(url);
@@ -30,36 +31,48 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('2012-1988-1991'));
 
 function auth(req, res, next) {
-  console.log(req.headers);
+  console.log(req.signedCookies);
 
-  var authHeader = req.headers.authorization;
+  if (!req.signedCookies.user) {
+    var authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    var error = new Error('You are not authenticated');
+    if (!authHeader) {
+      var error = new Error('You are not authenticated');
 
-    res.setHeader('WWW-Authenticate', 'Basic');
-    error.status = 401;
-    return next(error);
+      res.setHeader('WWW-Authenticate', 'Basic');
+      error.status = 401;
+      return next(error);
+    }
+
+    var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+
+    var username = auth[0];
+    var password = auth[1];
+
+    if (username === 'admin' && password === 'password') {
+      res.cookie('user', 'admin', { signed: true })
+      next();
+    } else {
+      var error = new Error('You are not authenticated');
+
+      res.setHeader('WWW-Authenticate', 'Basic');
+      error.status = 401;
+      return next(error);
+    }
   }
+  else {
+    if (req.signedCookies.user === 'admin') {
+      next();
+    } else {
+      var error = new Error('You are not authenticated');
 
-  var auth = new Buffer.alloc(authHeader.split(' ')[1], 'base64').toString().split(':');
-
-  var username = auth[0];
-  var password = auth[1];
-
-  if (username === 'admin' && password === 'password') {
-    next();
-  } else {
-    var error = new Error('You are not authenticated');
-
-    res.setHeader('WWW-Authenticate', 'Basic');
-    error.status = 401;
-    return next(error);
+      error.status = 401;
+      return next(error);
+    }
   }
-
 }
 
 app.use(auth);
