@@ -20,8 +20,8 @@ options.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 options.secretOrKey = config.secretKey;
 
 exports.jwtPassport = passport.use(new jwtStrategy(options, (jwt_payload, done) => {
-    console.log('jwt payload', jwt_payload);
-    User.findOne({id: jwt_payload._id}, (error, user) => {
+    console.log('jwt payload', jwt_payload._id);
+    User.findOne({_id: jwt_payload._id}, (error, user) => {
         if(error) {
             return done(error, false);
         }
