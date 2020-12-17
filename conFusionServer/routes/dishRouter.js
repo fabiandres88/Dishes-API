@@ -202,15 +202,21 @@ dishRouter.route('/:dishId/comments/:commentId')
                     }
                     dish.save()
                         .then((dish) => {
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json(dish);
+                            Dishes.findById(dish._id)
+                                .populate('comments.author')
+                                .then((dish) => {
+                                    res.statusCode = 200;
+                                    res.setHeader('Content-Type', 'application/json');
+                                    res.json(dish);
+                                })
                         }, (error) => next(error));
-                } else if (dish == null) {
+                }
+                else if (dish == null) {
                     error = new Error('Dish ' + req.params.dishId + ' not found');
                     error.status = 404;
                     return next(error);
-                } else {
+                }
+                else {
                     error = new Error('Comment ' + req.params.commentId + ' not found');
                     error.status = 404;
                     return next(error);
@@ -226,9 +232,13 @@ dishRouter.route('/:dishId/comments/:commentId')
                     dish.comments.id(req.params.commentId).remove();
                     dish.save()
                         .then((dish) => {
-                            res.statusCode = 204;
-                            res.setHeader('content-Type', 'application/json');
-                            res.json(dish);
+                            Dishes.findById(dish._id)
+                                .populate('comments.author')
+                                .then((dish) => {
+                                    res.statusCode = 204;
+                                    res.setHeader('content-Type', 'application/json');
+                                    res.json(dish);
+                                })
                         }, (error) => next(error));
                 } else if (dish == null) {
                     error = new Error('Dish ' + req.params.dishId + ' not found');
