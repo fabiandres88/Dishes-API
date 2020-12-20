@@ -8,9 +8,16 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function (req, res, next) {
-  res.render('respond with a resource');
-});
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next)=> {
+  User.find({})
+  .then((users) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(users);
+  }).catch((error) => {
+    console.error(error);
+  })
+  });
 
 router.post('/signup', (req, res, next) => {
   User.register(new User({ username: req.body.username }), req.body.password, (error, user) => {
@@ -55,7 +62,7 @@ router.get('/logout', (req, res) => {
     res.redirect('/');
   }
   else {
-    var error = new Error('You are not loggen in');
+    var error = new Error('You are not logged in');
     error.status = 403;
     next(error);
   }

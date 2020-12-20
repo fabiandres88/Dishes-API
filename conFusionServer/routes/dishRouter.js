@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 const authenticate = require('../authenticate');
 
 const Dishes = require('../models/dishes');
@@ -21,10 +20,9 @@ dishRouter.route('/')
             .catch((error) => next(error));
     })
 
-    .post(authenticate.verifyUser, (req, res, next) => {
+    .post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.create(req.body)
             .then((dish) => {
-                console.log('Dish Created', dish);
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
                 res.json(dish);
@@ -36,7 +34,7 @@ dishRouter.route('/')
         res.end('PUT operation not supported on /dishes.');
     })
 
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.remove({})
             .then((response) => {
                 res.statusCode = 204;
@@ -65,7 +63,7 @@ dishRouter.route('/:dishId')
             + req.params.dishId);
     })
 
-    .put(authenticate.verifyUser, (req, res, next) => {
+    .put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.findByIdAndUpdate(req.params.dishId, {
             $set: req.body
         }, { new: true })
@@ -77,7 +75,7 @@ dishRouter.route('/:dishId')
             .catch((error) => next(error));
     })
 
-    .delete(authenticate.verifyUser, (req, res, next) => {
+    .delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
         Dishes.findByIdAndDelete(req.params.dishId)
             .then((response) => {
                 res.statusCode = 204;
@@ -141,8 +139,8 @@ dishRouter.route('/:dishId/comments')
         Dishes.findById(req.params.dishId)
             .then((dish) => {
                 if (dish != null) {
-                    for (let i = (dish.comments.length - 1); i >= 0; i--) {
-                        dish.comments.id(dish.comments[i]._id).remove();
+                    for (let i = (dish.comments.length - 1); i >= 0; i--) {                        
+                            dish.comments.id(dish.comments[i]._id).remove();                       
                     }
                     dish.save((dish))
                         .then((dish) => {
@@ -193,6 +191,7 @@ dishRouter.route('/:dishId/comments/:commentId')
     .put(authenticate.verifyUser, (req, res, next) => {
         Dishes.findById(req.params.dishId)
             .then((dish) => {
+                
                 if (dish != null && dish.comments.id(req.params.commentId) != null) {
                     if (req.body.rating) {
                         dish.comments.id(req.params.commentId).rating = req.body.rating;
