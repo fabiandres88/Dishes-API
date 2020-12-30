@@ -86,28 +86,35 @@ router.get('/:favoriteId', cors.corsWithOptions, authenticate.verifyUser, (req, 
 });
 
 router.post('/:favoriteId', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Favorite.create({ user: req.user._id })
-        .then((favorite) => {
-            if (favorite != null) {
-                favorite.dish.push(req.params.favoriteId)
-                favorite.save(favorite)
-                    .then((favorite) => {
-                        Favorite.findById(favorite._id)
-                            .then((favorite) => {
-                                res.statusCode = 200;
-                                res.setHeader("Content-Type", "application/json");
-                                res.json(favorite);
-                            }, (errror) => next(error))
-                            .catch((error) => next(error));
-                    })
-            }
-            else {
-                error = new Error('Favorite ' + req.params.favoriteId + ' not found');
-                error.status = 404;
-                return next(error);
-            }
-        }, (errror) => next(error))
-        .catch((error) => next(error));
+    Favorite.findOne({user: req.user._id})
+    .then((favorite) => {
+	if (favorite != null) {
+	   favorite.dish.push(req.params.favoriteId)
+	   favorite.save()
+	   .then((favorite) => {
+		res.statusCode= 200;
+		res.setHeader("Content-Type", "application/json");
+		res.json(favorite);
+	   }, (error) => next(error))
+	   .catch((error) => next(error));
+	}
+	else if (favorite == null) {
+	   Favorite.create({user: req.user._id})
+	   .then((favorite) => {
+		favorite.dish.push(req.params.favoriteId)
+		favorite.save()
+		.then((favorite) => {
+		    res.statusCode = 200;
+		    res.setHeader("Content-Type", "application/json");
+		    res.json(favorite);	
+	   }, (error) => next(error))
+	   .catch((error) => next(error));
+	   }, (error) => next(error))
+	   .catch((error) => next(error))
+	}
+    }, (error) => next(error))
+    .catch((error) => next(error));
+   
 });
 
 router.put('/:favoriteId', cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
@@ -117,13 +124,26 @@ router.put('/:favoriteId', cors.corsWithOptions, authenticate.verifyUser, (req, 
 });
 
 router.delete('/:favoriteId', cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
-    Favorite.findByIdAndDelete(req.params.favoriteId)
-        .then((response) => {
-            res.statusCode = 204;
-            res.setHeader('Content-Type', 'application/json');
-            res.json(response);
-        }, (error) => next(error))
-        .catch((error) => next(error));
+    Favorite.findOne({user: req.user._id})
+    .then((favorite) => {
+	if(favorite != null) {
+	   let index = favorite.dish.indexOf(req.params.favoriteId);
+	   favorite.dish.split(index,0);
+	   favorite.save()
+	   .then((favorite) => {
+		res.statusCode = 200;
+		res.setHeader("Content-Type", "application/json");
+		res.json(favorite);
+	   }, (error) => next(error))
+	   .catch((error) => next(error));
+	}
+	else if(favotite == null) {
+	    res.statusCode = 400;
+	    res.setHeader("Content-Type", "application/json");
+	    res.json({dish: req.params.favoriteId }, {message: " This dish is not a favorite"} );	
+	}
+    }, (error) => next(error))
+    .catch((error) => next(error));    
 });
 
 module.exports = router;
